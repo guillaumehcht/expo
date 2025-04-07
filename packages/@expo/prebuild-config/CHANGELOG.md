@@ -7,6 +7,8 @@
 - upgrade RN to 0.78 ([#35050](https://github.com/expo/expo/pull/35050) by [@vonovak](https://github.com/vonovak))
 
 ### 🎉 New features
+ 
+- [Android] Support `enableEdgeToEdge` field in app config.
 
 ### 🐛 Bug fixes
 

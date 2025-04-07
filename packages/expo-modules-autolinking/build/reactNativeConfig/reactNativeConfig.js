@@ -3,19 +3,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resolveAppProjectConfigAsync = exports.resolveDependencyConfigAsync = exports.findDependencyRootsAsync = exports.createReactNativeConfigAsync = void 0;
+exports.createReactNativeConfigAsync = createReactNativeConfigAsync;
+exports.findDependencyRootsAsync = findDependencyRootsAsync;
+exports.resolveDependencyConfigAsync = resolveDependencyConfigAsync;
+exports.resolveAppProjectConfigAsync = resolveAppProjectConfigAsync;
+const config_1 = require("@expo/config");
+const EdgeToEdge_1 = require("@expo/config-plugins/build/android/EdgeToEdge");
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
 const utils_1 = require("../autolinking/utils");
 const fileUtils_1 = require("../fileUtils");
 const androidResolver_1 = require("./androidResolver");
-const config_1 = require("./config");
+const config_2 = require("./config");
 const iosResolver_1 = require("./iosResolver");
 /**
  * Create config for react-native core autolinking.
  */
 async function createReactNativeConfigAsync({ platform, projectRoot, searchPaths, }) {
-    const projectConfig = await (0, config_1.loadConfigAsync)(projectRoot);
+    const projectConfig = await (0, config_2.loadConfigAsync)(projectRoot);
     const dependencyRoots = {
         ...(await findDependencyRootsAsync(projectRoot, searchPaths, platform)),
         ...findProjectLocalDependencyRoots(projectConfig),
@@ -43,7 +48,6 @@ async function createReactNativeConfigAsync({ platform, projectRoot, searchPaths
         project: projectData,
     };
 }
-exports.createReactNativeConfigAsync = createReactNativeConfigAsync;
 /**
  * Find all dependencies and their directories from the project.
  */
@@ -53,8 +57,15 @@ async function findDependencyRootsAsync(projectRoot, searchPaths, platform) {
         ...Object.keys(packageJson.dependencies ?? {}),
         ...Object.keys(packageJson.devDependencies ?? {}),
     ];
+    const config = (0, config_1.getConfig)(projectRoot, {
+        skipSDKVersionRequirement: true,
+    });
+    // There are two reasons why we don't want to autolink `edge-to-edge` when `edgeToEdge` property is set to `false`:
+    // 1. `react-native-is-edge-to-edge` tries to check if the `edge-to-edge` turbomodule is present to determine whether edge-to-edge is enabled.
+    // 2. `react-native-edge-to-edge` applies edge-to-edge in `onHostResume` and has no property to disable this behavior.
     const shouldAutolinkEdgeToEdge = platform === 'android' &&
         getExpoVersion(packageJson) >= 53 &&
+        (0, EdgeToEdge_1.hasEnabledEdgeToEdge)(config.exp) &&
         !dependencies.includes('react-native-edge-to-edge');
     // Edge-to-egde is a dependency of expo for versions >= 53, so it's a transitive dependency for the project, but is a not an expo module,
     // so it won't be autolinked. We will try to find it in the search paths and autolink it.
@@ -80,7 +91,6 @@ async function findDependencyRootsAsync(projectRoot, searchPaths, platform) {
     }
     return results;
 }
-exports.findDependencyRootsAsync = findDependencyRootsAsync;
 /**
  * Find local dependencies that specified in the `react-native.config.js` file.
  */
@@ -97,7 +107,7 @@ function findProjectLocalDependencyRoots(projectConfig) {
     return results;
 }
 async function resolveDependencyConfigAsync(platform, name, packageRoot, projectConfig) {
-    const libraryConfig = await (0, config_1.loadConfigAsync)(packageRoot);
+    const libraryConfig = await (0, config_2.loadConfigAsync)(packageRoot);
     const reactNativeConfig = {
         ...libraryConfig?.dependency,
         ...projectConfig?.dependencies?.[name],
@@ -131,7 +141,6 @@ async function resolveDependencyConfigAsync(platform, name, packageRoot, project
         },
     };
 }
-exports.resolveDependencyConfigAsync = resolveDependencyConfigAsync;
 async function resolveAppProjectConfigAsync(projectRoot, platform) {
     if (platform === 'android') {
         const androidDir = path_1.default.join(projectRoot, 'android');
@@ -156,7 +165,6 @@ async function resolveAppProjectConfigAsync(projectRoot, platform) {
     }
     return {};
 }
-exports.resolveAppProjectConfigAsync = resolveAppProjectConfigAsync;
 /**
  * Extracts the major version number from the 'expo' dependency string.
  *
