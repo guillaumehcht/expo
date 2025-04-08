@@ -152,7 +152,8 @@ struct AppleMapsView: View, AppleMapsViewProtocol {
       }
       .mapFeatureSelectionAccessory(props.properties.selectionEnabled ? .automatic : nil)
       .mapStyle(properties.mapType.toMapStyle(
-        showsTraffic: properties.isTrafficEnabled
+        showsTraffic: properties.isTrafficEnabled,
+        pointsOfInterest: properties.isPointsOfInterestEnabled
       ))
       .onAppear {
         state.mapCameraPosition = convertToMapCamera(position: props.cameraPosition)

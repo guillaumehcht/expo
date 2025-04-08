@@ -70,21 +70,25 @@ struct MapUISettings: Record {
 struct MapProperties: Record {
   @Field var mapType: MapType = .standard
   @Field var isTrafficEnabled: Bool = false
+  @Field var isPointsOfInterestEnabled: Bool = true
   @Field var selectionEnabled: Bool = true
 }
 
 enum MapType: String, Enumerable {
   case standard = "STANDARD"
+  case mutedStandard = "MUTED_STANDARD"
   case hybrid = "HYBRID"
   case imagery = "IMAGERY"
 
   @available(iOS 17.0, *)
-  func toMapStyle(showsTraffic: Bool = false) -> MapStyle {
+  func toMapStyle(showsTraffic: Bool = false, pointsOfInterest: Bool = true) -> MapStyle {
     switch self {
     case .standard:
-      return .standard(pointsOfInterest: .all, showsTraffic: showsTraffic)
+      return .standard(pointsOfInterest: pointsOfInterest, showsTraffic: showsTraffic)
+    case .mutedStandard:
+      return .mutedStandard(pointsOfInterest: pointsOfInterest, showsTraffic: showsTraffic)
     case .hybrid:
-      return .hybrid(pointsOfInterest: .all, showsTraffic: showsTraffic)
+      return .hybrid(pointsOfInterest: pointsOfInterest, showsTraffic: showsTraffic)
     case .imagery:
       return .imagery
     }
